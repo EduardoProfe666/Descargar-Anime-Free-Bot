@@ -2,7 +2,6 @@ import time
 from typing import Any, List
 
 from cloudscraper.exceptions import CloudflareChallengeError
-from mega import Mega
 
 from api.animeflv import AnimeInfo, AnimeFLV, EpisodeInfoDownload, EpisodeInfo, DownloadLinkInfo
 
