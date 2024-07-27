@@ -48,12 +48,15 @@ async def button(update: Update, context: ContextTypes.DEFAULT_TYPE):
             await query.edit_message_text(text="No se encontraron episodios para este anime.")
     elif data.startswith("episode_"):
         anime_id, episode_id = data.split("_")[1:]
-        video_path = get_link(episode_id, anime_id)
+        download_links = get_link(episode_id, anime_id)
 
-        if video_path:
-            await query.message.reply_video(video=InputFile(video_path))
+        if download_links:
+            keyboard = [[InlineKeyboardButton(f"{link.server}", url=link.url)] for link in download_links]
+            reply_markup = InlineKeyboardMarkup(keyboard)
+            await query.edit_message_text(text="Selecciona un servidor para descargar el episodio:",
+                                          reply_markup=reply_markup)
         else:
-            await query.edit_message_text(text="No se encontró un video para este episodio.")
+            await query.edit_message_text(text="No se encontraron enlaces de descarga para este episodio.")
 
 
 if __name__ == '__main__':

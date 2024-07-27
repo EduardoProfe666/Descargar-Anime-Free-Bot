@@ -54,12 +54,7 @@ def get_anime_episodes(id: str) -> List[EpisodeInfo]:
 def get_link(id: str, anime_id: str):
     with AnimeFLV() as api:
         download: List[DownloadLinkInfo] = wrap_request(api.get_links, f'{anime_id}-{id}', expected=[List[DownloadLinkInfo('', '')]])
-        for x in download:
-            if x.server == 'MEGA':
-                mega = Mega()
-                m = mega.login()
-                return m.download_url(x.url)
-        return ''
+        return download
 
 
 def get_anime_episode_info_download(id: str) -> List[EpisodeInfoDownload]:
