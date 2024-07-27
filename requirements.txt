@@ -2,3 +2,4 @@ cloudscraper~=1.2.71
 lxml
 beautifulsoup4~=4.12.3
 python-telegram-bot
+mega.py
