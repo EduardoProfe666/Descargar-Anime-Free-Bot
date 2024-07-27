@@ -342,6 +342,7 @@ class AnimeFLV(object):
                     data = contents.split("var episodes = ")[1].split(";")[0]
                     episodes_data.extend(json.loads(data))
 
+
             AnimeThumbnailsId = info_ids[0][0]
             animeId = info_ids[0][2]
             # nextEpisodeDate = info_ids[0][3] if len(info_ids[0]) > 4 else None
