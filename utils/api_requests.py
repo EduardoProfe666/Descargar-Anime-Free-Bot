@@ -2,6 +2,7 @@ import time
 from typing import Any, List
 
 from cloudscraper.exceptions import CloudflareChallengeError
+from mega import Mega
 
 from api.animeflv import AnimeInfo, AnimeFLV, EpisodeInfoDownload, EpisodeInfo, DownloadLinkInfo
 
@@ -49,6 +50,17 @@ def get_anime_episodes(id: str) -> List[EpisodeInfo]:
     with AnimeFLV() as api:
         data: List[EpisodeInfo] = wrap_request(api.get_anime_info, id, expected=[AnimeInfo(0, "")]).episodes
     return data
+
+def get_link(id: str, anime_id: str):
+    with AnimeFLV() as api:
+        download: List[DownloadLinkInfo] = wrap_request(api.get_links, f'{anime_id}-{id}', expected=[List[DownloadLinkInfo('', '')]])
+        for x in download:
+            if x.server == 'MEGA':
+                mega = Mega()
+                m = mega.login()
+                return m.download_url(x.url)
+        return ''
+
 
 def get_anime_episode_info_download(id: str) -> List[EpisodeInfoDownload]:
     with AnimeFLV() as api:
