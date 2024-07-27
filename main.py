@@ -1,9 +1,9 @@
 from os import environ
 from typing import Final
-from telegram import Update
-from telegram.ext import Application, CommandHandler, MessageHandler, filters, ContextTypes
+from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
+from telegram.ext import Application, CommandHandler, MessageHandler, filters, ContextTypes, CallbackQueryHandler
 
-from utils.api_requests import search_animes
+from utils.api_requests import search_animes, get_anime_episodes
 
 TOKEN: Final = environ.get("TOKEN", "")
 BOT_USERNAME: Final = environ.get("BOT_USERNAME", "")
@@ -22,11 +22,27 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     results = search_animes(user_message)
 
     if results:
-        for anime in results:
-            caption = f"<b>{anime.title}</b>\n\n{anime.synopsis}"
-            await update.message.reply_photo(photo=anime.poster, caption=caption, parse_mode="HTML")
+        keyboard = [[InlineKeyboardButton(anime.title, callback_data=str(anime.id))] for anime in results]
+        reply_markup = InlineKeyboardMarkup(keyboard)
+        await update.message.reply_text("Selecciona un anime:", reply_markup=reply_markup)
     else:
         await update.message.reply_text("No se encontraron resultados para tu búsqueda.")
+
+
+async def button(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    query = update.callback_query
+    await query.answer()
+
+    anime_id = query.data
+    episodes = get_anime_episodes(anime_id)
+
+    if episodes:
+        keyboard = [[InlineKeyboardButton(f"Episodio {episode.id}", callback_data=str(episode.id))] for episode in
+                    episodes]
+        reply_markup = InlineKeyboardMarkup(keyboard)
+        await query.edit_message_text(text="Selecciona un episodio:", reply_markup=reply_markup)
+    else:
+        await query.edit_message_text(text="No se encontraron episodios para este anime.")
 
 
 if __name__ == '__main__':
@@ -38,6 +54,9 @@ if __name__ == '__main__':
 
     # Messages
     app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
+
+    # Callbacks
+    app.add_handler(CallbackQueryHandler(button))
 
     # Errors
 
