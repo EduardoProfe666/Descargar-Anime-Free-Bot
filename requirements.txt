@@ -1,4 +1,6 @@
-cloudscraper~=1.2.71
+cloudscraper
 lxml
-beautifulsoup4~=4.12.3
+beautifulsoup4
 python-telegram-bot
+fastapi
+uvicorn[standard]

@@ -1,25 +1,25 @@
 from os import environ
 from typing import Final
+
+from fastapi import FastAPI, Request
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup, ChatMember
 from telegram.ext import Application, CommandHandler, MessageHandler, filters, ContextTypes, CallbackQueryHandler
-
 from utils.api_requests import search_animes, get_anime_episodes, get_link
+import json
+
+app = FastAPI()
 
 TOKEN: Final = environ.get("TOKEN", "")
 
 BOT_USERNAME: Final = environ.get("BOT_USERNAME", "")
 
-
-
 async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text(
         "Hola 👋... Bienvenido al descargador de anime gratis subtitulado al español... Empieza a buscar tus animes favoritos... Pon el comando /search para mayor información")
 
-
 async def search_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text(
         "Por favor, introduce el nombre de la serie de anime que deseas buscar. Luego selecciona el anime que quieras, para luego seleccionar el/los episodio/s a descargar desde el servidor que quieras")
-
 
 async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_message = update.message.text
@@ -33,7 +33,6 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await search_message.edit_text("Selecciona un anime:", reply_markup=reply_markup)
     else:
         await search_message.edit_text("No se encontraron resultados para tu búsqueda.")
-
 
 async def button(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
@@ -80,11 +79,9 @@ async def button(update: Update, context: ContextTypes.DEFAULT_TYPE):
         else:
             await search_message.edit_text(text="No se encontraron enlaces de descarga para este episodio.")
 
-
 async def error_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """Send a message to the user indicating there was an error."""
     await update.effective_message.reply_text("Hubo un error con su petición, inténtelo más tarde.")
-
 
 async def clear_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Clear all messages and restart the chat."""
@@ -107,23 +104,29 @@ async def clear_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     context.chat_data.clear()
     await update.message.reply_text("Chat reiniciado.")
 
-
-if __name__ == '__main__':
-    app = Application.builder().token(TOKEN).build()
+@app.post("/webhook")
+async def webhook(request: Request):
+    bot = Application.builder().token(TOKEN).build()
 
     # Commands
-    app.add_handler(CommandHandler("start", start_command))
-    app.add_handler(CommandHandler("search", search_command))
-    app.add_handler(CommandHandler("clear", clear_command))
+    bot.add_handler(CommandHandler("start", start_command))
+    bot.add_handler(CommandHandler("search", search_command))
+    bot.add_handler(CommandHandler("clear", clear_command))
 
     # Messages
-    app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
+    bot.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
 
     # Callbacks
-    app.add_handler(CallbackQueryHandler(button))
+    bot.add_handler(CallbackQueryHandler(button))
 
     # Errors
-    app.add_error_handler(error_handler)
+    bot.add_error_handler(error_handler)
 
-    # Polls the bot
-    app.run_polling(poll_interval=3)
+    update = Update.de_json(await request.json(), bot.bot)
+    await bot.process_update(update)
+
+    return {"status": "ok"}
+
+if __name__ == '__main__':
+    import uvicorn
+    uvicorn.run(app, host="0.0.0.0", port=8000)
