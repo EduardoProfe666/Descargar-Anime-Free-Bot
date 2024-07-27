@@ -108,6 +108,8 @@ async def clear_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def webhook(request: Request):
     bot = Application.builder().token(TOKEN).build()
 
+    await bot.initialize()
+
     # Commands
     bot.add_handler(CommandHandler("start", start_command))
     bot.add_handler(CommandHandler("search", search_command))
